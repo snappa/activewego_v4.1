@@ -79,12 +79,17 @@ describe "UserPages" do
     end
 
     describe "with valid information" do
+      let(:new_user) { FactoryGirl.create(:user) }
       before do
-        fill_in "First name",         with: "Example"
-        fill_in "Last name",         with: "User"
-        fill_in "Email",        with: "user@example.com"
-        fill_in "Password",     with: "foobar"
-        fill_in "Confirm Password", with: "foobar"
+# WDS: Before creating new_form_user from exercises in 8.5 to decouple...
+#
+#        fill_in "First name",         with: "Example"
+#        fill_in "Last name",         with: "User"
+#        fill_in "Email",        with: "user@example.com"
+#        fill_in "Password",     with: "foobar"
+#        fill_in "Confirm Password", with: "foobar"
+        new_user.email = "user@example.com"
+        new_form_user(new_user)
       end
 
       it "should create a user" do
@@ -97,7 +102,7 @@ describe "UserPages" do
 
         it { should have_link('Sign out') }
         it { should have_title(user.name) }
-        it { should have_selector('div.alert.alert-success', text: 'Welcome') }
+        it { should have_success_message('Welcome') }
       end
 
     end
