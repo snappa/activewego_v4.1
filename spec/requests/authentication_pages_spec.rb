@@ -37,7 +37,7 @@ describe "Authentication" do
 #          click_button "Sign in"
 
 #          valid_signin(user)
-          sign_in(user)
+          sign_in(user, { no_capybara: false })
         end
 
         it { should have_title(user.name) }
@@ -51,6 +51,26 @@ describe "Authentication" do
           before { click_link "Sign out" }
           it { should have_link('Sign in') }
         end
+
+        describe "signed in user can't create new user" do
+          describe "can't create new when logged in" do
+            before { visit new_user_path }
+            it { should have_info_message("logged in and can't create a new user..") }
+          end
+        end
+=begin
+  WDS: Need to figure out how to test the controller directly without invoking the
+       "new" first.  Need to test the action 'create'
+
+        describe "test create" do
+          before do
+            post '/users', {methpd: 'post', user: {first_name: "boo", last_name: "bar", password: "password",
+                                     password_confirmation: "password",
+                                     email: "boo@bar.com"}}
+          end
+          it { should have_info_message("logged in and can't create a new user..") }
+        end
+=end
       end
 
     end
@@ -60,22 +80,6 @@ describe "Authentication" do
 
     describe "for non-signed-in users" do
       let(:user) { FactoryGirl.create(:user) }
-
-      describe "when attempting to visit a protected page" do
-        before do
-          visit edit_user_path(user)
-          fill_in "Email",    with: user.email
-          fill_in "Password", with: user.password
-          click_button "Sign in"
-        end
-
-        describe "after signing in" do
-
-          it "should render the desired protected page" do
-            expect(page).to have_title('Edit user')
-          end
-        end
-      end
 
       describe "in the Users controller" do
 
@@ -94,6 +98,37 @@ describe "Authentication" do
           it { should have_title('Sign in') }
         end
       end
+
+      describe "when attempting to visit a protected page" do
+        before do
+          visit edit_user_path(user)
+          fill_in "Email",    with: user.email
+          fill_in "Password", with: user.password
+          click_button "Sign in"
+        end
+
+        describe "after signing in" do
+
+          it "should render the desired protected page" do
+            expect(page).to have_title('Edit user')
+          end
+
+          describe "when signing in again" do
+            before do
+              click_link "Sign out"
+              visit signin_path
+              fill_in "Email",    with: user.email
+              fill_in "Password", with: user.password
+              click_button "Sign in"
+            end
+
+            it "should render the default (profile) page" do
+              expect(page).to have_title(user.name)
+            end
+          end
+        end
+      end
+
     end
 
     describe "as wrong user" do
@@ -123,6 +158,27 @@ describe "Authentication" do
         before { delete user_path(user) }
         specify { expect(response).to redirect_to(root_url) }
       end
+    end
+
+    describe "admin user can NOT delete themselves" do
+      let(:admin_user) { FactoryGirl.create(:admin) }
+
+      before { sign_in admin_user, no_capybara: true }
+
+      describe "no way" do
+          before { delete user_path(admin_user) }
+          specify { expect(response).to redirect_to(users_path) }
+      end
+      
+      describe "can't delete self" do
+        it "should not be possible" do
+          expect { delete user_path(admin_user)  }.not_to change(User, :count)
+        end
+      end
+
+#        expect do
+#          delete user_path(admin)
+#        end.not_to change(User, :count).by(-1)
     end
 
   end
