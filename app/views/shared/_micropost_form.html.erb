@@ -1,7 +1,16 @@
+<style>
+.help-block-inline {
+  display: inline-block;
+}
+</style>
+
 <%= form_for(@micropost) do |f| %>
   <%= render 'shared/error_messages', object: f.object %>
   <div class="field">
     <%= f.text_area :content, placeholder: "Compose new micropost..." %>
+  </div>
+  <div class="help-block" >
+  <span class="help-block-inline">Characters left:</span><span class="help-block-inline" id="counter"></span>
   </div>
   <%= f.submit "Post", class: "btn btn-lg btn-primary" %>
 <% end %>
